@@ -5,7 +5,7 @@ on:
 
 jobs:
   list-packages:
-    runs-on: ubuntu-26.04-arm64
+    runs-on: ubuntu-26.04-arm
     steps:
       - name: List installed packages
         run: |
