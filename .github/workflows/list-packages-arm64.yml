@@ -1,0 +1,28 @@
+name: List Installed Packages (ARM64)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list-packages:
+    runs-on: ubuntu-26.04-arm64
+    steps:
+      - name: List installed packages
+        run: |
+          echo "=== Architecture ==="
+          dpkg --print-architecture
+          echo ""
+          echo "=== dpkg packages ==="
+          dpkg -l | awk '/^ii/ {print $2, $3}'
+          echo ""
+          echo "=== apt list --installed ==="
+          apt list --installed 2>/dev/null
+          echo ""
+          echo "=== Package count ==="
+          dpkg -l | grep -c '^ii'
+          echo ""
+          echo "=== Disk usage by package ==="
+          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -rn | head -30
+          echo ""
+          echo "=== Total installed size ==="
+          dpkg-query -Wf '${Installed-Size}\n' | awk '{sum+=$1} END {printf "%.1f MB\n", sum/1024}'
