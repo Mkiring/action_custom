@@ -19,8 +19,8 @@ on:
           - Debian
           - Ubuntu
         default: Debian
-      release:
-        description: "Release/distro"
+      debian_release:
+        description: "Debian release (only used when Distro family = Debian)"
         required: true
         type: choice
         options:
@@ -31,13 +31,19 @@ on:
           - sid
           - forky
           - resolute
+        default: bookworm
+      ubuntu_release:
+        description: "Ubuntu release (only used when Distro family = Ubuntu)"
+        required: true
+        type: choice
+        options:
           - plucky
           - oracular
           - noble
           - jammy
           - focal
           - questing
-        default: bookworm
+        default: noble
       desktop:
         description: "Desktop environment"
         required: true
@@ -92,7 +98,11 @@ jobs:
         run: |
           BOARD="${{ github.event.inputs.board }}"
           DISTRO="${{ github.event.inputs.distro }}"
-          RELEASE="${{ github.event.inputs.release }}"
+          if [ "$DISTRO" = "Debian" ]; then
+            RELEASE="${{ github.event.inputs.debian_release }}"
+          else
+            RELEASE="${{ github.event.inputs.ubuntu_release }}"
+          fi
           DESKTOP="${{ github.event.inputs.desktop }}"
           TIER="${{ github.event.inputs.tier }}"
           VERSION="${{ github.event.inputs.version }}"
