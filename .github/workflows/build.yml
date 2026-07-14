@@ -11,20 +11,52 @@ on:
           - recomputer-rk3576-devkit
           - recomputer-rk3588-devkit
         default: recomputer-rk3576-devkit
-      release:
-        description: "Release/distro (e.g. bookworm, noble)"
+      distro:
+        description: "Distro family"
         required: true
-        type: string
+        type: choice
+        options:
+          - Debian
+          - Ubuntu
+        default: Debian
+      release:
+        description: "Release/distro"
+        required: true
+        type: choice
+        options:
+          - trixie
+          - bookworm
+          - bullseye
+          - buster
+          - sid
+          - forky
+          - resolute
+          - plucky
+          - oracular
+          - noble
+          - jammy
+          - focal
+          - questing
         default: bookworm
       desktop:
-        description: "Desktop environment (e.g. gnome, xfce, kde-plasma, mate, cinnamon)"
+        description: "Desktop environment"
         required: true
-        type: string
+        type: choice
+        options:
+          - gnome
+          - xfce
+          - kde-plasma
+          - mate
+          - cinnamon
         default: gnome
       tier:
-        description: "Desktop tier (minimal, mid, full)"
+        description: "Desktop tier"
         required: true
-        type: string
+        type: choice
+        options:
+          - minimal
+          - mid
+          - full
         default: mid
       version:
         description: "Version"
@@ -36,14 +68,37 @@ jobs:
   print-selections:
     runs-on: ubuntu-latest
     steps:
-      - name: Print selected build options
+      - name: Validate and print selected build options
         run: |
+          BOARD="${{ github.event.inputs.board }}"
+          DISTRO="${{ github.event.inputs.distro }}"
+          RELEASE="${{ github.event.inputs.release }}"
+          DESKTOP="${{ github.event.inputs.desktop }}"
+          TIER="${{ github.event.inputs.tier }}"
+          VERSION="${{ github.event.inputs.version }}"
+
+          DEBIAN_RELEASES="trixie bookworm bullseye buster sid forky resolute"
+          UBUNTU_RELEASES="plucky oracular noble jammy focal questing"
+
+          if [ "$DISTRO" = "Debian" ]; then
+            if [[ " $DEBIAN_RELEASES " != *" $RELEASE "* ]]; then
+              echo "Error: $RELEASE is not a Debian release."
+              exit 1
+            fi
+          elif [ "$DISTRO" = "Ubuntu" ]; then
+            if [[ " $UBUNTU_RELEASES " != *" $RELEASE "* ]]; then
+              echo "Error: $RELEASE is not an Ubuntu release."
+              exit 1
+            fi
+          fi
+
           echo "=== Selected build options ==="
-          echo "board:   ${{ github.event.inputs.board }}"
-          echo "release: ${{ github.event.inputs.release }}"
-          echo "desktop: ${{ github.event.inputs.desktop }}"
-          echo "tier:    ${{ github.event.inputs.tier }}"
-          echo "version: ${{ github.event.inputs.version }}"
+          echo "board:   $BOARD"
+          echo "distro:  $DISTRO"
+          echo "release: $RELEASE"
+          echo "desktop: $DESKTOP"
+          echo "tier:    $TIER"
+          echo "version: $VERSION"
           echo "================================"
           echo "Exiting as requested."
           exit 0
