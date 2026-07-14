@@ -63,6 +63,26 @@ on:
         required: true
         type: string
         default: ""
+      recovery:
+        description: "Enable recovery OTA"
+        required: true
+        type: boolean
+        default: false
+      ab:
+        description: "Enable A/B dual-partition OTA"
+        required: true
+        type: boolean
+        default: false
+      secure_boot:
+        description: "Enable secure U-Boot + encryption + auto-decrypt"
+        required: true
+        type: boolean
+        default: false
+      optee:
+        description: "Enable OP-TEE boot + encryption + auto-decrypt"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   print-selections:
@@ -76,6 +96,17 @@ jobs:
           DESKTOP="${{ github.event.inputs.desktop }}"
           TIER="${{ github.event.inputs.tier }}"
           VERSION="${{ github.event.inputs.version }}"
+          RECOVERY="${{ github.event.inputs.recovery }}"
+          AB="${{ github.event.inputs.ab }}"
+          SECURE_BOOT="${{ github.event.inputs.secure_boot }}"
+          OPTEE="${{ github.event.inputs.optee }}"
+
+          PROFILES=""
+          [ "$RECOVERY" = "true" ] && PROFILES="$PROFILES recovery"
+          [ "$AB" = "true" ] && PROFILES="$PROFILES ab"
+          [ "$SECURE_BOOT" = "true" ] && PROFILES="$PROFILES secure-boot"
+          [ "$OPTEE" = "true" ] && PROFILES="$PROFILES optee"
+          PROFILES=$(echo "$PROFILES" | sed 's/^[[:space:]]*//')
 
           DEBIAN_RELEASES="trixie bookworm bullseye buster sid forky resolute"
           UBUNTU_RELEASES="plucky oracular noble jammy focal questing"
@@ -93,12 +124,13 @@ jobs:
           fi
 
           echo "=== Selected build options ==="
-          echo "board:   $BOARD"
-          echo "distro:  $DISTRO"
-          echo "release: $RELEASE"
-          echo "desktop: $DESKTOP"
-          echo "tier:    $TIER"
-          echo "version: $VERSION"
+          echo "board:    $BOARD"
+          echo "distro:   $DISTRO"
+          echo "release:  $RELEASE"
+          echo "desktop:  $DESKTOP"
+          echo "tier:     $TIER"
+          echo "version:  $VERSION"
+          echo "profiles: ${PROFILES:-<none>}"
           echo "================================"
           echo "Exiting as requested."
           exit 0
