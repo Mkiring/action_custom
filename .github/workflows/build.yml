@@ -1,0 +1,49 @@
+name: Build Test (seeed-build)
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: "Board name"
+        required: true
+        type: choice
+        options:
+          - recomputer-rk3576-devkit
+          - recomputer-rk3588-devkit
+        default: recomputer-rk3576-devkit
+      release:
+        description: "Release/distro (e.g. bookworm, noble)"
+        required: true
+        type: string
+        default: bookworm
+      desktop:
+        description: "Desktop environment (e.g. gnome, xfce, kde-plasma, mate, cinnamon)"
+        required: true
+        type: string
+        default: gnome
+      tier:
+        description: "Desktop tier (minimal, mid, full)"
+        required: true
+        type: string
+        default: mid
+      version:
+        description: "Version"
+        required: true
+        type: string
+        default: ""
+
+jobs:
+  print-selections:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print selected build options
+        run: |
+          echo "=== Selected build options ==="
+          echo "board:   ${{ github.event.inputs.board }}"
+          echo "release: ${{ github.event.inputs.release }}"
+          echo "desktop: ${{ github.event.inputs.desktop }}"
+          echo "tier:    ${{ github.event.inputs.tier }}"
+          echo "version: ${{ github.event.inputs.version }}"
+          echo "================================"
+          echo "Exiting as requested."
+          exit 0
