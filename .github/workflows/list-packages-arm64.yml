@@ -7,22 +7,63 @@ jobs:
   list-packages:
     runs-on: ubuntu-26.04-arm
     steps:
-      - name: List installed packages
+      - name: Disk usage and installed size BEFORE trim
         run: |
           echo "=== Architecture ==="
           dpkg --print-architecture
           echo ""
-          echo "=== dpkg packages ==="
-          dpkg -l | awk '/^ii/ {print $2, $3}'
+          echo "=== Disk usage before ==="
+          df -h /
           echo ""
-          echo "=== apt list --installed ==="
-          apt list --installed 2>/dev/null
-          echo ""
-          echo "=== Package count ==="
+          echo "=== Installed package count before ==="
           dpkg -l | grep -c '^ii'
           echo ""
-          echo "=== Disk usage by package ==="
-          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -rn | head -30
-          echo ""
-          echo "=== Total installed size ==="
+          echo "=== Total installed size before ==="
           dpkg-query -Wf '${Installed-Size}\n' | awk '{sum+=$1} END {printf "%.1f MB\n", sum/1024}'
+
+      - name: Trim packages (keep docker/qemu + system base)
+        run: |
+          set -e
+          KEEP_PATTERN='^(docker|qemu)'
+
+          echo "=== Building removal list ==="
+          # Keep packages that are Essential, priority required/important, or match docker/qemu.
+          mapfile -t REMOVE < <(dpkg-query -Wf '${Package}\t${Priority}\t${Essential}\n' \
+            | awk -v pat="$KEEP_PATTERN" '$3 != "yes" && $2 != "required" && $2 != "important" && $1 !~ pat {print $1}')
+
+          echo "Packages to remove: ${#REMOVE[@]}"
+          if [ "${#REMOVE[@]}" -eq 0 ]; then
+            echo "Nothing to remove."
+            exit 0
+          fi
+
+          printf '%s\n' "${REMOVE[@]}" > /tmp/remove-packages.txt
+          echo "First 20 packages in removal list:"
+          head -n 20 /tmp/remove-packages.txt
+          echo ""
+
+          echo "=== Running apt-get purge (with auto-remove) ==="
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get purge -yq --auto-remove \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            "${REMOVE[@]}" || {
+              echo "WARNING: apt-get purge exited with code $?, continuing..."
+              true
+            }
+
+      - name: Disk usage and installed size AFTER trim
+        run: |
+          echo "=== Disk usage after ==="
+          df -h /
+          echo ""
+          echo "=== Installed package count after ==="
+          dpkg -l | grep -c '^ii'
+          echo ""
+          echo "=== Total installed size after ==="
+          dpkg-query -Wf '${Installed-Size}\n' | awk '{sum+=$1} END {printf "%.1f MB\n", sum/1024}'
+
+      - name: List remaining packages
+        run: |
+          echo "=== Remaining dpkg packages ==="
+          dpkg -l | awk '/^ii/ {print $2, $3}'
