@@ -1,0 +1,12 @@
+name: Get Repository Variable
+
+on:
+  workflow_dispatch:
+
+jobs:
+  print-variable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print CRYPTROOT_PASSPHRASE
+        run: |
+          echo "CRYPTROOT_PASSPHRASE=${{ vars.CRYPTROOT_PASSPHRASE }}"
